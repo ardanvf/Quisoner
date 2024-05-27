@@ -13,14 +13,10 @@ from statsmodels.stats.stattools import durbin_watson
 from scipy.stats import t
 import matplotlib.pyplot as plt
 import os
-from flask import Flask, render_template, request, redirect, url_for
-from flask_wtf import FlaskForm
-from flask_uploads import UploadSet, configure_uploads, ALL
-from wtforms import FileField, SubmitField
+from flask import Flask, render_template, request, redirect, flash
 import pandas as pd
-from werkzeug.utils import secure_filename
-from werkzeug.datastructures import  FileStorage
 import statistics
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -187,6 +183,47 @@ def penerimaan():
 @app.route('/')
 def home():
     return render_template('index.html')
+
+# Tentukan folder untuk menyimpan file yang diupload
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Tentukan ekstensi file yang diizinkan
+ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload')
+def upload_form():
+    return render_template('upload.html')
+
+@app.route('/upload/lagi', methods=['POST'])
+def upload_file():
+    if 'excelFile' not in request.files:
+        flash('No file part')
+        return redirect(request.url)
+    file = request.files['excelFile']
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        # Membaca file Excel ke dalam DataFrame pandas
+        df = pd.read_excel(file_path)
+        
+        # Debugging: Cetak isi DataFrame ke konsol (atau lakukan sesuatu dengan df)
+        print(df)
+        
+        flash('File successfully uploaded and processed')
+        return redirect('/')
+    else:
+        flash('Allowed file types are .xls, .xlsx')
+        return redirect(request.url)
+
 
 @app.route('/uji')
 def uji():
