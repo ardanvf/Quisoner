@@ -184,46 +184,6 @@ def penerimaan():
 def home():
     return render_template('index.html')
 
-# Tentukan folder untuk menyimpan file yang diupload
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# Tentukan ekstensi file yang diizinkan
-ALLOWED_EXTENSIONS = {'xls', 'xlsx'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.route('/upload')
-def upload_form():
-    return render_template('upload.html')
-
-@app.route('/upload/lagi', methods=['POST'])
-def upload_file():
-    if 'excelFile' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
-    file = request.files['excelFile']
-    if file.filename == '':
-        flash('No selected file')
-        return redirect(request.url)
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        
-        # Membaca file Excel ke dalam DataFrame pandas
-        df = pd.read_excel(file_path)
-        
-        # Debugging: Cetak isi DataFrame ke konsol (atau lakukan sesuatu dengan df)
-        print(df)
-        
-        flash('File successfully uploaded and processed')
-        return redirect('/')
-    else:
-        flash('Allowed file types are .xls, .xlsx')
-        return redirect(request.url)
-
 
 @app.route('/uji')
 def uji():
